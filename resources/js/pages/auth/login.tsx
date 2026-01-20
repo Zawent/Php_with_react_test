@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import InputError from '@/components/input-error';
-import TextLink from '@/components/text-link'; // Usamos TextLink para mantener consistencia
+import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -8,7 +9,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
 
 interface LoginProps {
     status?: string;
@@ -21,6 +23,8 @@ export default function Login({
     canResetPassword,
     canRegister,
 }: LoginProps) {
+    const [remember, setRemember] = useState(false);
+
     return (
         <>
             <style>{`
@@ -32,6 +36,18 @@ export default function Login({
             <Head title="Log in" />
 
             <div className="min-h-screen bg-[#fdfdfc] dark:bg-[#0A1439] text-slate-900 dark:text-white flex items-center justify-center p-4 relative overflow-hidden">
+                
+                {/* BOTÓN VOLVER AL INICIO */}
+                <div className="absolute top-6 left-6 z-20">
+                    <Link 
+                        href="/" 
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 dark:bg-white/5 backdrop-blur-md border border-slate-200 dark:border-white/10 text-sm font-medium hover:bg-[#acc55f] hover:text-white transition-all duration-300 group"
+                    >
+                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                        Volver al inicio
+                    </Link>
+                </div>
+
                 {/* Background gradients */}
                 <div className="absolute top-0 right-0 -z-10 w-1/2 h-full bg-gradient-to-l from-[#acc55f]/10 to-transparent blur-3xl opacity-50"></div>
                 <div className="absolute bottom-0 left-0 -z-10 w-1/3 h-1/2 bg-gradient-to-tr from-[#79b4c2]/10 to-transparent blur-3xl opacity-50"></div>
@@ -65,7 +81,6 @@ export default function Login({
                             </div>
                         )}
 
-                        {/* RESTAURADA LA LÓGICA DE FORMULARIO */}
                         <Form
                             {...store.form()}
                             resetOnSuccess={['password']}
@@ -116,8 +131,14 @@ export default function Login({
                                     <div className="flex items-center space-x-3">
                                         <Checkbox
                                             id="remember"
-                                            name="remember"
+                                            checked={remember}
+                                            onCheckedChange={(checked) => setRemember(checked === true)}
                                             tabIndex={3}
+                                        />
+                                        <input 
+                                            type="hidden" 
+                                            name="remember" 
+                                            value={remember ? '1' : '0'} 
                                         />
                                         <Label htmlFor="remember" className="cursor-pointer">
                                             Recuérdame

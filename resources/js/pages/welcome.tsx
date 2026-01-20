@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+// IMPORTACIONES CRÍTICAS DE INERTIA
+import { Head, Link, usePage } from '@inertiajs/react';
 
-const FadeInSection = ({ children }) => {
+// Componente auxiliar para animaciones al hacer scroll
+const FadeInSection = ({ children }: { children: React.ReactNode }) => {
     const [isVisible, setVisible] = useState(false);
-    const domRef = useRef(null);
+    const domRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const observer = new IntersectionObserver(entries => {
@@ -18,18 +21,23 @@ const FadeInSection = ({ children }) => {
     }, []);
 
     return (
-        <div ref={domRef} className={`transition-all duration-1000 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
+        <div 
+            ref={domRef} 
+            className={`transition-all duration-1000 ease-out ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+            }`}
+        >
             {children}
         </div>
     );
 };
 
-export default function Welcome({ canRegister = true }) {
-    // Simulación de auth - En tu proyecto real usa: const { auth } = usePage().props;
-    const auth = { user: null };
+export default function Welcome({ canRegister = true }: { canRegister?: boolean }) {
+    // Obtenemos los props de autenticación reales de Inertia
+    const { auth } = usePage().props as any;
     const [email, setEmail] = useState('');
 
-    const scrollToSection = (e, id) => {
+    const scrollToSection = (e: React.MouseEvent, id: string) => {
         e.preventDefault();
         const element = document.getElementById(id);
         if (element) {
@@ -46,7 +54,7 @@ export default function Welcome({ canRegister = true }) {
         }
     };
 
-    const handleNewsletterSubmit = (e) => {
+    const handleNewsletterSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         console.log('Newsletter subscription:', email);
         setEmail('');
@@ -227,7 +235,7 @@ export default function Welcome({ canRegister = true }) {
 
                     {/* MARQUEE */}
                     <section className="py-12 border-y border-white/5 bg-[#0A1439]/50 overflow-hidden">
-                        <p className="text-center text-slate-800 text-s font-bold uppercase tracking-[0.2em] mb-8">Empresas que confían en GestoAgile</p>
+                        <p className="text-center text-[#acc55f] text-s font-bold uppercase tracking-[0.2em] mb-8">Empresas que confían en GestoAgile</p>
                         <div className="marquee">
                             <div className="marquee-content">
                                 {['LOGISTIX', 'TECHFLOW', 'CARGOCO', 'GLOBALNET', 'SMARTMOVE', 'VELOCITY'].map((company, i) => (
@@ -323,7 +331,7 @@ export default function Welcome({ canRegister = true }) {
                                         {[...Array(5)].map((_, i) => <span key={i}>★</span>)}
                                     </div>
                                     <p className="text-lg italic leading-relaxed text-slate-700 dark:text-white">"{testimonial.text}"</p>
-                                    <div className="flex items-center gap-4 pt-4 border-t border-white/10 dark:border-white/10 border-slate-200">
+                                    <div className="flex items-center gap-4 pt-4 border-t border-white/10 dark:border-white/10">
                                         <img src={`images/person${i + 1}.png`} alt={testimonial.name} className="w-12 h-12 rounded-full bg-slate-300 dark:bg-slate-700"/>
                                         <div>
                                             <h5 className="font-bold text-slate-900 dark:text-white">{testimonial.name}</h5>
@@ -402,7 +410,7 @@ export default function Welcome({ canRegister = true }) {
                             <p className="text-xs text-gray-400 dark:text-slate-400">Recibe las últimas novedades en logística y trazabilidad.</p>
                             <div className="flex flex-col gap-3">
                                 <input 
-                                    className="bg-[#1B2E58] dark:bg-[#1B2E58] bg-slate-100 border border-white/10 dark:border-white/10 border-slate-300 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:ring-[#acc55f] focus:border-[#acc55f] outline-none" 
+                                    className=" dark:bg-[#1B2E58] bg-slate-100 border dark:border-white/10 border-slate-300 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:ring-[#acc55f] focus:border-[#acc55f] outline-none" 
                                     placeholder="tu@email.com" 
                                     type="email"
                                     value={email}
