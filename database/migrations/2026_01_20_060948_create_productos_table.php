@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('nombre');
             $table->string('sku')->nullable()->index();
             $table->text('descripcion')->nullable();
+            $table->string('imagen')->nullable();
             $table->boolean('activo')->default(true);
             $table->timestamps();
         });

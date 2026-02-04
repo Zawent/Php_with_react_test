@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Producto;
 use App\Models\Proveedor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ProductoController extends Controller
@@ -26,7 +27,6 @@ class ProductoController extends Controller
     {
         $this->authorizeEmpresa($producto);
 
-        // Cargar relaciones si quieres mostrar proveedores o bodegas
         $producto->load('proveedores', 'bodegas');
 
         return Inertia::render('inventario/productos/show', [
@@ -55,18 +55,29 @@ class ProductoController extends Controller
             'nombre' => 'required|string|max:255',
             'sku' => 'nullable|string|max:255',
             'descripcion' => 'nullable|string',
+            'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB
             'proveedor_id' => 'nullable|exists:proveedores,id',
         ]);
+
+        // Manejar la subida de imagen
+        $imagenPath = null;
+        if ($request->hasFile('imagen')) {
+            $imagenPath = $request->file('imagen')->store(
+                'productos',
+                'public'
+            );
+        }
 
         $producto = Producto::create([
             'empresa_id' => $request->user()->empresa_id,
             'nombre' => $request->nombre,
             'sku' => $request->sku,
             'descripcion' => $request->descripcion,
+            'imagen' => $imagenPath,
             'activo' => true,
         ]);
 
-        // 👉 si seleccionaron proveedor
+        // Si seleccionaron proveedor
         if ($request->proveedor_id) {
             $producto->proveedores()->attach($request->proveedor_id);
         }
@@ -94,23 +105,46 @@ class ProductoController extends Controller
         $this->authorizeEmpresa($producto);
 
         $request->validate([
-            'nombre'        => 'required|string|max:255',
-            'sku'           => 'nullable|string|max:100',
-            'descripcion'   => 'nullable|string',
-            'activo'        => 'boolean',
-            'proveedor_id'  => 'nullable|exists:proveedores,id',
-            'sin_proveedor' => 'boolean',
+            'nombre'          => 'required|string|max:255',
+            'sku'             => 'nullable|string|max:100',
+            'descripcion'     => 'nullable|string',
+            'imagen'          => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'eliminar_imagen' => 'boolean',
+            'activo'          => 'boolean',
+            'proveedor_id'    => 'nullable|exists:proveedores,id',
+            'sin_proveedor'   => 'boolean',
         ]);
 
-        // 1️⃣ Actualizar datos básicos del producto
+        // Manejar actualización/eliminación de imagen
+        $imagenPath = $producto->imagen;
+        
+        // Si marcaron eliminar imagen
+        if ($request->boolean('eliminar_imagen')) {
+            if ($producto->imagen) {
+                Storage::disk('public')->delete($producto->imagen);
+            }
+            $imagenPath = null;
+        }
+        
+        // Si subieron una nueva imagen
+        if ($request->hasFile('imagen')) {
+            // Eliminar imagen anterior si existe
+            if ($producto->imagen) {
+                Storage::disk('public')->delete($producto->imagen);
+            }
+            $imagenPath = $request->file('imagen')->store('productos', 'public');
+        }
+
+        // Actualizar datos básicos del producto
         $producto->update([
             'nombre'      => $request->nombre,
             'sku'         => $request->sku,
             'descripcion' => $request->descripcion,
+            'imagen'      => $imagenPath,
             'activo'      => $request->activo,
         ]);
 
-        // 2️⃣ Manejar relación con proveedores
+        // Manejar relación con proveedores
         if ($request->boolean('sin_proveedor')) {
             $producto->proveedores()->sync([]);
         } elseif ($request->proveedor_id) {
@@ -121,12 +155,10 @@ class ProductoController extends Controller
             ]);
         }
 
-
         return redirect()
             ->route('inventario.productos.index')
             ->with('success', 'Producto actualizado correctamente');
     }
-
 
     public function destroy(Producto $producto)
     {

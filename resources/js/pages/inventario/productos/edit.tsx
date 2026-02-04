@@ -2,6 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
+import ImageUploader from '@/components/image-uploader';
 
 interface Proveedor {
     id: number;
@@ -13,6 +14,8 @@ interface Producto {
     nombre: string;
     sku?: string;
     descripcion?: string;
+    imagen?: string;
+    imagen_url?: string;
     activo: boolean;
     proveedores: Proveedor[];
 }
@@ -38,10 +41,13 @@ export default function ProductoEdit({
             ? producto.proveedores[0].id.toString()
             : '';
 
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, post, processing, errors } = useForm({
+        _method: 'PUT',
         nombre: producto.nombre,
         sku: producto.sku ?? '',
         descripcion: producto.descripcion ?? '',
+        imagen: null as File | null,
+        eliminar_imagen: false,
         activo: producto.activo,
         proveedor_id: proveedorInicial,
         sin_proveedor: producto.proveedores.length === 0,
@@ -49,8 +55,18 @@ export default function ProductoEdit({
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
-        put(`/inventario/productos/${producto.id}`);
+        // Usar POST con _method para enviar archivos
+        post(`/inventario/productos/${producto.id}`, {
+            forceFormData: true,
+        });
     }
+
+    // Determinar qué imagen mostrar
+    const currentImage = data.imagen 
+        ? data.imagen 
+        : (!data.eliminar_imagen && producto.imagen_url) 
+            ? producto.imagen_url 
+            : null;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs(producto.id)}>
@@ -113,6 +129,39 @@ export default function ProductoEdit({
                             className="w-full px-3 py-2 rounded-lg border border-border focus:ring-2 focus:ring-lime-500"
                         />
                     </div>
+
+                    {/* Imagen del Producto */}
+                    <ImageUploader
+                        value={currentImage}
+                        onChange={(file) => {
+                            setData('imagen', file);
+                            if (file) {
+                                setData('eliminar_imagen', false);
+                            }
+                        }}
+                        error={errors.imagen}
+                    />
+
+                    {/* Opción para eliminar imagen existente */}
+                    {producto.imagen_url && !data.imagen && (
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="eliminar_imagen"
+                                checked={data.eliminar_imagen}
+                                onChange={(e) =>
+                                    setData('eliminar_imagen', e.target.checked)
+                                }
+                                className="rounded border-border"
+                            />
+                            <label 
+                                htmlFor="eliminar_imagen"
+                                className="text-sm font-medium text-rose-600 cursor-pointer"
+                            >
+                                Eliminar imagen actual
+                            </label>
+                        </div>
+                    )}
 
                     {/* Proveedor */}
                     {proveedores.length === 0 ? (
@@ -205,7 +254,7 @@ export default function ProductoEdit({
                             disabled={processing}
                             className="px-4 py-2 bg-lime-500 text-white rounded-xl font-bold hover:bg-lime-600 disabled:opacity-50"
                         >
-                            Guardar cambios
+                            {processing ? 'Guardando...' : 'Guardar cambios'}
                         </button>
                     </div>
                 </form>

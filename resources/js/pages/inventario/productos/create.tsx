@@ -2,6 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
+import ImageUploader from '@/components/image-uploader';
 
 interface Proveedor {
     id: number;
@@ -24,6 +25,7 @@ export default function ProductoCreate({ proveedores }: Props) {
         nombre: '',
         sku: '',
         descripcion: '',
+        imagen: null as File | null,
         activo: true,
         proveedor_id: '',
         sin_proveedor: false,
@@ -31,7 +33,11 @@ export default function ProductoCreate({ proveedores }: Props) {
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
-        post('/inventario/productos');
+        
+        // Usar FormData para enviar archivos
+        post('/inventario/productos', {
+            forceFormData: true,
+        });
     }
 
     return (
@@ -95,6 +101,13 @@ export default function ProductoCreate({ proveedores }: Props) {
                             className="w-full px-3 py-2 rounded-lg border border-border focus:ring-2 focus:ring-lime-500"
                         />
                     </div>
+
+                    {/* Imagen del Producto */}
+                    <ImageUploader
+                        value={data.imagen}
+                        onChange={(file) => setData('imagen', file)}
+                        error={errors.imagen}
+                    />
 
                     {/* Proveedor */}
                     {proveedores.length === 0 ? (
@@ -187,7 +200,7 @@ export default function ProductoCreate({ proveedores }: Props) {
                             disabled={processing}
                             className="px-4 py-2 bg-lime-500 text-white rounded-xl font-bold hover:bg-lime-600 disabled:opacity-50"
                         >
-                            Guardar
+                            {processing ? 'Guardando...' : 'Guardar'}
                         </button>
                     </div>
                 </form>

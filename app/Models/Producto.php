@@ -13,9 +13,12 @@ class Producto extends Model
         'nombre',
         'sku',
         'descripcion',
+        'imagen',
         'activo',
     ];
 
+    protected $appends = ['imagen_url'];
+        
     public function empresa()
     {
         return $this->belongsTo(Empresa::class);
@@ -37,5 +40,12 @@ class Producto extends Model
         )
         ->withPivot('stock')
         ->withTimestamps();
+    }
+
+    public function getImagenUrlAttribute()
+    {
+        return $this->imagen 
+            ? asset('storage/' . $this->imagen) 
+            : null;
     }
 }
